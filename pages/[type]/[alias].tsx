@@ -6,13 +6,18 @@ import { TopLevelCategory, TopPageModel } from "../../interfaces/page.interface"
 import { ParsedUrlQuery } from "querystring";
 import { ProductModel } from "../../interfaces/product.interface";
 import { firstLevelMenu } from "../../helpers/helpers";
-import { TopPageComponent } from "../../pages-components/TopPageComponent/TopPageComponent";
+import { TopPageComponent } from "../../pages-components/index";
 import { API } from "../../helpers/api";
 import Head from "next/head";
+import { Error404 } from "../404";
 
 function TopPage({ firstCategory, page, products }: TopPageProps): JSX.Element {
+  if (!page || !products) {
+    return <Error404 />;
+  }
+
   return (
-    <>
+     <>
       <Head>
         <title>{page.metaTitle}</title>
         <meta name='description' content={page.metaDescription} />
@@ -21,9 +26,9 @@ function TopPage({ firstCategory, page, products }: TopPageProps): JSX.Element {
         <meta property='og:type' content='article' />
       </Head>
       <TopPageComponent
-      firstCategory={firstCategory}
-      page={page}
-      products={products}
+        firstCategory={firstCategory}
+        page={page}
+        products={products}
       />;
     </>
   );
@@ -44,7 +49,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
   return {
     paths,
-    fallback: true
+    fallback: false
   };
 };
 
