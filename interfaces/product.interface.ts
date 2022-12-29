@@ -9,7 +9,7 @@ export interface ReviewModel {
   title: string;
   description: string;
   rating: number;
-  createdaAt: Date;
+  createdAt: Date;
 }
  
 export interface Blog {
@@ -30,7 +30,8 @@ export interface ProductModel {
     credit: number;
     oldPrice: number;
     characteristics: ProductCharacteristic[];
-    advantages: string;
+    advantages?: string;
+    disadvantages?: string;
     initialRating: number;
     createdAt: Date;
     updatedAt: Date;

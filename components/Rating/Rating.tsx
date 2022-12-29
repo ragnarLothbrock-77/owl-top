@@ -1,16 +1,31 @@
-import React, { KeyboardEvent, useEffect, useState } from 'react';
+import React, { ForwardedRef, forwardRef, KeyboardEvent, useEffect, useRef, useState } from 'react';
 import styles from './Rating.module.css';
 import cn from 'classnames';
 import { RatingProps } from './Rating.props';
 import Star from './star.svg';
 
-export const Rating = ({isEditable = false, rating, setRating, ...props}: RatingProps): JSX.Element => {
+export const Rating = forwardRef(({className, isEditable = false, rating, error, tabIndex, setRating, ...props}: RatingProps, ref: ForwardedRef<HTMLDivElement>): JSX.Element => {
   const [ratingArray, setRatingArray] = useState<JSX.Element[]>(new Array(5).fill(<></>));
+  const ratingRef = useRef<(HTMLSpanElement | null)[]>([]);
 
   useEffect(() => {
       constructRating(rating);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rating] ); 
+  }, [rating, tabIndex] ); 
+
+
+  const computeFocus = (r: number, i: number): number => {
+    if (!isEditable) {
+      return -1;
+    }
+    if (!rating && i == 0) {
+      return tabIndex ?? 0;
+    }
+    if (r == i + 1) {
+      return tabIndex ?? 0;
+    }
+    return -1;
+  };
 
 
   const changeDisplay = (i: number) => {
@@ -25,12 +40,25 @@ export const Rating = ({isEditable = false, rating, setRating, ...props}: Rating
     }
   };
 
-  // const handleSpaceKey = (i: number, e: KeyboardEvent<SVGElement>) => {
-  //   if (e.code != 'Space' || !setRating) {
-  //     return;
-  //   }
-  //   setRating(i);
-  // };
+  const handleKey = (e: KeyboardEvent) => {
+    if (!isEditable || !setRating) {
+      return;
+    }
+    if (e.code == 'ArrowRight' || e.code == 'ArrowUp') {
+      if (!rating) {
+        setRating(1);
+      } else {
+        e.preventDefault();
+        setRating(rating < 5 ? rating + 1 : 5);
+      }
+      ratingRef.current[rating]?.focus();
+    }
+    if (e.code == 'ArrowDown' || e.code == 'ArrowLeft') {
+      e.preventDefault();
+      setRating(rating > 1 ? rating - 1 : 1);
+      ratingRef.current[rating - 2]?.focus();
+    }
+  };
 
    
   const constructRating = (currentRating: number) => {
@@ -40,9 +68,6 @@ export const Rating = ({isEditable = false, rating, setRating, ...props}: Rating
             className={cn(styles.star, {
               [styles.filled]: i < currentRating
             })}
-            // tabIndex={isEditable ? 0 : -1}
-            onClick={() => resetRating(i + 1)}
-            // onKeyDown={(e: KeyboardEvent<SVGElement>) => isEditable && handleSpaceKey(i +1, e)}
           />
       );
     });
@@ -50,18 +75,30 @@ export const Rating = ({isEditable = false, rating, setRating, ...props}: Rating
   };
 
   return (
-    <div {...props}>
+    <div 
+      {...props} 
+      ref={ref}
+      className={cn(className, styles.ratingWrapper)}
+    >
       {
         ratingArray.map((r,i) => (
           <span 
             key={i}
-            className={cn({[styles.editable]: isEditable})}
+            className={cn({
+              [styles.editable]: isEditable,
+              [styles.error]: error
+            })}
             onMouseEnter={() => changeDisplay(i + 1)}
             onMouseLeave={() => changeDisplay(rating)}
+            tabIndex={computeFocus(rating, i)}
+            ref={r => ratingRef.current?.push(r)}
+            onClick={() => resetRating(i + 1)}
+            onKeyDown={handleKey}
           >
             {r}
         </span>))
       }
+      {error && <span className={styles.errorMessage}>{error.message}</span>}
     </div>
   );
-};
+});
